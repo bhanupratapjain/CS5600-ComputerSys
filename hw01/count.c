@@ -2,12 +2,10 @@
 #include <unistd.h>
 
 void main() {
-	// signal(SIGUSR2, sighandler);
-
 	int a = 0;
 	while (1) {
 		a += 1;
-		printf("new number %d\n", a);
+		printf("Number %d\n", a);
 		sleep(1);
 		}
 }

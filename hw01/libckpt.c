@@ -134,8 +134,6 @@ void process_mem_headers(int fd_out, header * mem_header_ptrs[]) {
 
 int dump_context(int fd_out) {
 	ucontext_t p_context;
-	int fd_out_1;
-
 	printf("Dumping Context\n");
 	if (getcontext(&p_context) < 0) {
 		printf("Get Context Failed\n");
@@ -144,9 +142,7 @@ int dump_context(int fd_out) {
 	} else {
 		printf("Got Context %lu\n", sizeof(p_context));
 	}
-	fd_out_1 = open("myckpt1", O_CREAT | O_WRONLY | O_APPEND | O_TRUNC,
-			S_IRUSR | S_IWUSR | S_IXUSR);
-	if (write(fd_out_1, &p_context, sizeof(ucontext_t)) < 0) {
+	if (write(fd_out, &p_context, sizeof(ucontext_t)) < 0) {
 		perror("Error while writing  context.");
 		return -1;
 	}

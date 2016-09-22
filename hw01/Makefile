@@ -1,19 +1,32 @@
-all:make
+CFLAGS=-g -O0 -fpic -Wall
+#-Werror
+
+default: count myrestart dockpt  
 	echo Make Successful
 
-default: make
-	echo Make Successful
+util.o: util.c util.h
+	gcc $(CFLAGS) -c util.c -o util.o
 
-make: make-main-binary load-so
+ckpt.o: ckpt.c util.h
+	gcc $(CFLAGS) -c ckpt.c -o ckpt.o
 
-make-main-binary:  
-	gcc count.c -o count
+count:  count.c
+	gcc $(CFLAGS) count.c -o count
 
-make-so:make-so-binary
-	gcc -shared -o libckpt.so libckpt
+libckpt.so: ckpt.o util.o
+	gcc -shared -o libckpt.so ckpt.o util.o
 
-load-so:make-so
-	export LD_PRELOAD=/home/bhanupratapjain/CS5600-ComputerSys/hw01/libckpt.so count
+dockpt: libckpt.so
+	LD_PRELOAD=`pwd`/libckpt.so ./count
 
-make-so-binary:
-	gcc -c -Wall -Werror -fpic libckpt.c -o libckpt
+myrestart.o: myrestart.c util.h
+	gcc $(CFLAGS) -c -o myrestart.o myrestart.c
+
+myrestart: myrestart.o util.o
+	gcc -g -static -Wl,-Ttext-segment=5000000 -Wl,-Tdata=5100000 -Wl,-Tbss=5200000 -o myrestart myrestart.o util.o
+
+res: myrestart
+	./myrestart myckpt
+
+clean:
+	rm -f *.o *.so myrestart count

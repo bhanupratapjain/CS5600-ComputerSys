@@ -4,6 +4,8 @@ CFLAGS=-g -O0 -fpic -Wall
 default: count myrestart dockpt  
 	echo Make Successful
 
+build: count myrestart libckpt.so  
+
 util.o: util.c util.h
 	gcc $(CFLAGS) -c util.c -o util.o
 

@@ -1,13 +1,23 @@
 CFLAGS=-g -O0 -fpic -Wall
 #-Werror
 
-default: count myrestart dockpt  
-	echo Make Successful
+all:	clean-ckpt count myrestart dockpt
 
-build: count myrestart libckpt.so  
+default: clean-ckpt count myrestart dockpt
+
+check:	clean-ckpt count myrestart libckpt.so
+	(sleep 3 && kill -12 `pgrep -n count` && sleep 2 && pkill -9 count) & 
+	LD_PRELOAD=`pwd`/libckpt.so ./count
+	(sleep 2 &&  pkill -9 restart) &
+	make res
+
+build: count myrestart libckpt.so
 
 util.o: util.c util.h
 	gcc $(CFLAGS) -c util.c -o util.o
+
+clean-ckpt:
+	rm -rf myckpt
 
 ckpt.o: ckpt.c util.h
 	gcc $(CFLAGS) -c ckpt.c -o ckpt.o
@@ -31,4 +41,4 @@ res: myrestart
 	./myrestart myckpt
 
 clean:
-	rm -f *.o *.so myrestart count
+	rm -f *.o *.so myrestart count myckpt

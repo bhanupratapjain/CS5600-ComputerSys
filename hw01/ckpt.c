@@ -14,6 +14,11 @@ int checkpoint_flag = 0;
 
 /**
  * Processes the incoming file pointer and writes it into the output pointer.
+ * 1) Read line of input file
+ * 2) Create memory header
+ * 3) Dump memory header to output file
+ * 4) Dump memory data to output file
+ * Repeat until end of file.
  * @param fp_in
  * @param fd_out
  * @param mem_header
@@ -186,23 +191,29 @@ void sig_handler(int signum) {
 	}
 	//printf("Checkpoint flag::%p and value::%d\n", &checkpoint_flag,
 	//		checkpoint_flag);
+	/*Read /proc/self/maps, create header structure,
+	 * and dump structure and memory into checkpoint file.*/
 	if (process_mem_headers(fp_in, fd_out, &mem_header) < 0) {
 		perror("Error while dumping memory");
 		close_file_handlers(fp_in, fd_out);
 		exit(-1);
 	}
+	/*Read context*/
 	if (getcontext(&p_context) < 0) {
 		printf("Get Context Failed\n");
 		perror("Error while getting context.");
 		close_file_handlers(fp_in, fd_out);
 		exit(-1);
 	}
+
+	/*Check if the execution is from restart or checkpoint*/
 	if (checkpoint_flag < 0) {
 		//printf("got back from restart\n");
 		//printf("Checkpoint flag::%p and value::%d\n", &checkpoint_flag,
 		//		checkpoint_flag);
 		return;
 	}
+	/*Dump context to output checkpoint file*/
 	if (dump_context(fd_out, &p_context) < 0) {
 		perror("Error while dumping context");
 		close_file_handlers(fp_in, fd_out);

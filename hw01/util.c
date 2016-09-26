@@ -29,25 +29,23 @@ int parse_mem_header(header * mem_header_ptr, char * line) {
 
 	/* get the address range*/
 	token = strtok(line, CONST_SPACE);
+
 	/* copy address range*/
-//	add_range = malloc(sizeof(char) * strlen(token));
-//	strcpy(add_range, token);
 	add_range = token;
-//	printf("Address Range %s\n", add_range);
+	//printf("Address Range %s\n", add_range);
 
 	/*get flags*/
 	token = strtok(NULL, CONST_SPACE);
 	strcpy(mem_header_ptr->perms,token);
-//	printf("Flags %s\n", flags);
-//	mem_header_ptr->perms = flags;
+	//printf("Flags %s\n", flags);
 
 	/*parse address range*/
 	add_range_token = strtok(add_range, CONST_HYPHEN);
-//	printf("start %s\n", add_range_token);
+	//printf("start %s\n", add_range_token);
 	mem_header_ptr->sAddr = strtol(add_range_token, NULL, 16);
 
 	add_range_token = strtok(NULL, CONST_HYPHEN);
-//	printf("end %s\n", add_range_token);
+	//printf("end %s\n", add_range_token);
 	mem_header_ptr->eAddr = strtol(add_range_token, NULL, 16);
 
 	return 0;

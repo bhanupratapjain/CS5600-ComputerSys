@@ -23,6 +23,7 @@ You must provide a Makefile for this project. Here is some advice for writing th
 - tar -xvf hw1.tar.gz
 - cd hw1
 - make check (*This will build all required binaries and call `count`. Then this will trigger envent `kill -12` on `count` and finally kill `count`*)
+	
 	This will generate the following error. Ignore it as it is generated as original count program was killed. 
 	```
 	Makefile:9: recipe for target 'check' failed

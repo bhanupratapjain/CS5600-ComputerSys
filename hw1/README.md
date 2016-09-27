@@ -54,7 +54,7 @@ You must provide a Makefile for this project. Here is some advice for writing th
 
 ### Restart
 1. Copy the chekpoint image name passed in command line arguments to gloabal variable `ckpt_image_name`.
-2. Read the old stack and save addressed to `header`
+2. Read the old stack and save addresses to `header`
 3. Map memory for new temporary stack.
 4. Point the `stack pointer` to the new stack.
 5. Unmap original stack allocated by the kernel.
@@ -63,8 +63,5 @@ You must provide a Makefile for this project. Here is some advice for writing th
 	2. Read data from checkpoint image to the allocated memory.
 	3. Set proper memory/map protection to the allocated memory.
 	4. Read the context.
-	5. Read `checkpoint_flag` and set value to `-1`
+	5. Read `checkpoint_flag` address from file and set value to `-1`
 	6. Set the read context.
-	
-
-###Restart

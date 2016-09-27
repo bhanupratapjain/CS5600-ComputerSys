@@ -31,23 +31,40 @@ You must provide a Makefile for this project. Here is some advice for writing th
 	```
 - make res (*This will call the restart program on the checkpoint image.*)
 
+*(Please note that in order run the make target with no errors we can use only `make check -i` and it will run `count`, save checkpoint image and successfully restart the program.)*
 
 ## Implementation Stratergy
 
 ###Checkpointing
 
-1. Register user signal -12 , through contructor in shared lib `libckpt.so`
+1. Register user `signal -12` , through contructor in shared lib `libckpt.so`
 2. Preload this shared lib in test program `count` through `LD_PRELOAD`
-3. When the user signal -12 is called on program `count`, call the signal handler.
+3. When the user `signal -12` is called on program `count`, call the signal handler.
 4. Inside the signal handler:
 	1. Read `proc/self/maps` line by line.
-	2. Create structure `header` which holds the addresss locations and permission flags of the read line.
-	3. Push `header` for each line to the checkpoint file.
-	4. Push the data for the address range to the checkpoint file. 
-	5. Read the contex. 		
-	6. Check whether the exuction is through `checkpoint` or `restart` through global `checkpoint_flag`. If the execution flow is from `restart` then `exit` else `continue`.
-	7. Save contex in checkpoint file.
-	8. Save `checkpoint_flag` address to the checkpoint file.
+	2. Skip `vvar`, `vdso`, `vsyscall` and all non readable regions.
+	3. Create structure `header` which holds the addresss locations and permission flags of the read line.
+	4. Push `header` for each line to the checkpoint file.
+	5. Push the data for the address range to the checkpoint file. 
+	6. Read the context. 		
+	7. Check whether the exuction flow is from `checkpoint` or `restart` by checking global variable `checkpoint_flag`. If the execution flow is from `restart` then `exit` else 		`continue`.
+	8. Save context in checkpoint file.
+	9. Save `checkpoint_flag` address to the checkpoint file.
+	10. Exit
+
+### Restart
+1. Copy the chekpoint image name passed in command line arguments to gloabal variable `ckpt_image_name`.
+2. Read the old stack and save addressed to `header`
+3. Map memory for new temporary stack.
+4. Point the `stack pointer` to the new stack.
+5. Unmap original stack allocated by the kernel.
+6. Read the checkpint image:
+	1. Map memory for the address range.
+	2. Read data from checkpoint image to the allocated memory.
+	3. Set proper memory/map protection to the allocated memory.
+	4. Read the context.
+	5. Read `checkpoint_flag` and set value to `-1`
+	6. Set the read context.
 	
 
 ###Restart

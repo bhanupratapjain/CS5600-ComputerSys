@@ -24,7 +24,7 @@ You must provide a Makefile for this project. Here is some advice for writing th
 - cd hw1
 - make check (*This will build all required binaries and call `count`. Then this will trigger envent `kill -12` on `count` and finally kill `count`*)
 	
-	This will generate the following error. Ignore it as it is generated as original count program was killed. 
+	This will generate the following error. Ignore it as it is generated beacuse the original count program was killed. 
 	```
 	Makefile:9: recipe for target 'check' failed
 	make: *** [check] Killed
@@ -33,3 +33,21 @@ You must provide a Makefile for this project. Here is some advice for writing th
 
 
 ## Implementation Stratergy
+
+###Checkpointing
+
+1. Register user signal -12 , through contructor in shared lib `libckpt.so`
+2. Preload this shared lib in test program `count` through `LD_PRELOAD`
+3. When the user signal -12 is called on program `count`, call the signal handler.
+4. Inside the signal handler:
+..1. Read `proc/self/maps` line by line.
+..2. Create structure `header` which holds the addresss locations and permission flags of the read line.
+..3. Push `header` for each line to the checkpoint file.
+..4. Push the data for the address range to the checkpoint file. 
+..5. Read the contex. 		
+..6. Check whether the exuction is through `checkpoint` or `restart` through global `checkpoint_flag`. If the execution flow is from `restart` then `exit` else `continue`.
+..7. Save contex in checkpoint file.
+..8. Save `checkpoint_flag` address to the checkpoint file.
+	
+
+###Restart

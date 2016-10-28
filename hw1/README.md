@@ -1,4 +1,4 @@
-# HW01
+# MINI DMTCP
 
 
 ## Problem

@@ -1,4 +1,2 @@
-# Create Shared Library4
-gcc -c -Wall -Werror -fpic libckpt.c -o libckpt
-gcc -shared -o libckpt.so libckpt
-export LD_PRELOAD=/home/bhanupratapjain/CS5600-ComputerSys/hw01/libckpt.so cout
+# CS5600 Fall 16
+This repository contains code for CS5600

@@ -18,6 +18,11 @@
 #define TEST 0
 #endif
 
+/* Testing level */
+#ifndef TEST_FORK
+#define TEST_FORK 1
+#endif
+
 #define N_TOTAL		500
 #ifndef N_THREADS
 #define N_THREADS	2
@@ -391,11 +396,11 @@ static void malloc_test(void *ptr, size_t stack_len)
 	{
 		int status;
 
-		printf("forking\n");
+//		printf("forking\n");
 		pid = fork();
 		if (pid > 0)
 		{
-			printf("waiting for %d...\n", pid);
+//			printf("waiting for %d...\n", pid);
 			waitpid(pid, &status, 0);
 			if (!WIFEXITED(status))
 			{

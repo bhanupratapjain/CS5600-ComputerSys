@@ -14,16 +14,16 @@ void malloc_stats();
 
 ## Data Structures
 
-##### Arena 
+#### Arena 
 `arenat_t` 
 Arena act as the main memory pool for thread. There can be one/more threads per arena. The total number of arenas cannot be greater than the number of processors.
 
 
-##### Bin *(free list)*
+#### Bin *(free list)*
 `bin_t`
 Bins are the part of arena and act as free list. There are bins only for `sbrk` memory, while `mmap` does not maintain any bin. Current implementation has `8`,`64`,`512` bins. The code can support dynamic bin sizes.
 
-##### Block
+#### Block
 `block_t`
 Blocks are the part of bins. Actual memory allocation is represented by the block. Both `sbrk` and `mmap` are represented by blocks.
 
@@ -38,17 +38,17 @@ Blocks are the part of bins. Actual memory allocation is represented by the bloc
     - While using `sbrk` memory, look for available blocks in respective bin. If no block is free, request new memory(*`PAGE_SIZE`*) from heap and equally divide this among all the bins of the arena.
     
 
-##### Block Allocation
+#### Block Allocation
 Whenever there is no available block in `bin`, existing heap is increased by a memory `PAGE` and this new memory is divided in blocks and distributed across all the bin of the respected arena.
 
-##### Thread Safety
+#### Thread Safety
 
 It is achieved by two locks
 
 - `global lock`: Used during initialization.
 - `arena lock`: Used during arena specific operations.
 
-##### Fork Safety
+#### Fork Safety
 To get a hold of all the free block in the child thread of all arenas, before fork, we unlock all the arenas and then these arenas are passed the child process. To achieve this we use `pthread_atfork` during init, and inject the following
    
 - `fork_prepare` : Acquire all arena locks by parent in parent process space before fork.
@@ -62,7 +62,7 @@ To get a hold of all the free block in the child thread of all arenas, before fo
 
 If we try to overload the block/bin header, the performance is poor. 
 
-### Future Work
+## Future Work
 
 - Performance improvements. 
 - Implement `hooks`

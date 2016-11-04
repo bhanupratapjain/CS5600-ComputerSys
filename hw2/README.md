@@ -11,9 +11,8 @@ void malloc_stats();
 ```
 
 
-## Design 
 
-### Data Structures
+## Data Structures
 
 ##### Arena 
 `arenat_t` 
@@ -28,7 +27,7 @@ Bins are the part of arena and act as free list. There are bins only for `sbrk` 
 `block_t`
 Blocks are the part of bins. Actual memory allocation is represented by the block. Both `sbrk` and `mmap` are represented by blocks.
 
-### Strategy
+## Strategy
 
 - Initalization is done through constructor, where `pthread_atfork` is hooked along with other inits.
 - For every `malloc` call:
@@ -36,11 +35,21 @@ Blocks are the part of bins. Actual memory allocation is represented by the bloc
         - While creating a new arena, initialize the bins.
     - If the requested memory is more than `HEAP_LIMIT` (*512*), then allocated memory through `mmap`
     - Else, request memory from existing `heap` using `sbrk`, thus increasing it.
+    - While using `sbrk` memory, look for available blocks in respective bin. If no block is free, request new memory(*`PAGE_SIZE`*) from heap and equally divide this among all the bins of the arena.
     
 
-#### Block Allocation
+### Block Allocation
 Whenever there is no available block in `bin`, new block are added and distributed across all the bin of the respected arena.
 
 
 
 
+## Know Issues
+
+If we try to overload the block/bin header, the performance is poor. 
+
+### Future Work
+
+- Performance improvements. 
+- Implement `hooks`
+- Buddy Allocation

@@ -21,7 +21,7 @@ Arena act as the main memory pool for thread. There can be one/more threads per 
 
 ##### Bins *(free list)*
 `bin_t`
-Bins are the part of arena and act as free list. There are bins only for `sbrk` memory, while `mmap` does not maintain any bin.
+Bins are the part of arena and act as free list. There are bins only for `sbrk` memory, while `mmap` does not maintain any bin. Current implementation has `8`,`64`,`512` bins. The code can support dynamic bin sizes.
 
 ##### Block
 `block_t`

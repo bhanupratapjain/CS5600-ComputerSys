@@ -38,7 +38,7 @@ Blocks are the part of bins. Actual memory allocation is represented by the bloc
     - While using `sbrk` memory, look for available blocks in respective bin. If no block is free, request new memory(*`PAGE_SIZE`*) from heap and equally divide this among all the bins of the arena.
     
 
-### Block Allocation
+##### Block Allocation
 Whenever there is no available block in `bin`, new block are added and distributed across all the bin of the respected arena.
 
 

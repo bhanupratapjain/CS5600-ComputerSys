@@ -22,7 +22,6 @@ arena_t *find_available_arena() {
 }
 
 void add_arena(arena_t *arena_ptr) {
-//	printf("####Inside Add Arena .Global arena [%p]\n", global_arena_ptr);
     if (global_arena_ptr == NULL) {
         global_arena_ptr = arena_ptr;
         return;
@@ -30,7 +29,6 @@ void add_arena(arena_t *arena_ptr) {
     arena_t *arena_itr = global_arena_ptr;
     arena_t *p_arena_itr = NULL;
     while (arena_itr != NULL) {
-//		printf("####found arena [%p]\n", arena_itr);
         p_arena_itr = arena_itr;
         arena_itr = arena_itr->next;
     }
@@ -40,7 +38,6 @@ void add_arena(arena_t *arena_ptr) {
 void add_block_to_bin(bin_t *bin_ptr, block_t *block_ptr) {
     block_t *block_itr = bin_ptr->blocks_ptr;
     block_t *p_block_itr = NULL;
-//	printf("Adding Block to Bin\n");
 
     if (block_itr == NULL) {
         bin_ptr->blocks_ptr = block_ptr;
@@ -57,27 +54,29 @@ void initialize_bins(arena_t *arent_t_ptr) {
     for (int i = 0; i < MAX_BINS; i++) {
         bin_t *bin_t_ptr = (bin_t *) sbrk(sizeof(bin_t));
         bin_t_ptr->type = i;
+        //TODO: STAT
+        bin_t_ptr->allc_req = 0;
+        /*bin_t_ptr->free_req = 0;
+        bin_t_ptr->free_blocks = 0;
+        bin_t_ptr->used_blocks = 0;*/
         arent_t_ptr->bins[i] = bin_t_ptr;
     }
 }
 
 arena_t *initialize_arenas() {
     pthread_mutex_lock(&arena_init_lock); //Arena Init Lock
-//	printf("####Inside Init Arena\n");
-//	printf("arenas-%d, processors-%d", no_of_arenas, no_of_processors);
     if (no_of_arenas == no_of_processors) {
-//		printf("####Existing Arena\n");
         /*Don' Create New Arena*/
         /*Move Global Pointer to Available arena*/
         arena_t *arena_ptr = find_available_arena();
+        arena_ptr->no_of_threads++;
         pthread_mutex_unlock(&arena_init_lock);
         return arena_ptr;
     }
-//	printf("####Creadting new arena\n");
     /*Create New Arena*/
     arena_t *thread_arena_ptr = (arena_t *) sbrk(sizeof(arena_t));
     thread_arena_ptr->next = NULL;
-    thread_arena_ptr->type = ARENA_THREAD;
+    thread_arena_ptr->no_of_threads = 1;
 
     /*Add arena to Global Arena Linked List*/
     add_arena(thread_arena_ptr);
@@ -85,53 +84,28 @@ arena_t *initialize_arenas() {
     /*Initialzie BINS*/
     initialize_bins(thread_arena_ptr);
 
-//	printf("####New arena added\n");
     /*Increase the no. of Arenas*/
     no_of_arenas += 1;
-//	printf("arenas-%d", no_of_arenas);
-//	printf("#### Arena Ptr %p", thread_arena_ptr);
 
     pthread_mutex_unlock(&arena_init_lock);
     return thread_arena_ptr;
 }
 
-int initialize_main_arena() {
 
+void *init_malloc() {
+
+    if (pthread_atfork(fork_prepare, fork_parent, fork_child) != 0) {
+        errno = ENOMEM;
+        return NULL;;
+    }
     system_page_size = sysconf(_SC_PAGESIZE);
     no_of_processors = sysconf(_SC_NPROCESSORS_ONLN);
-    /*arena_t main_thread_arena = { 0 };
-
-     main_thread_arena.next = NULL;
-     main_thread_arena.status = ARENA_USED;
-     main_thread_arena.type = ARENA_MAIN;
-
-     block_t * block_ptr = NULL;
-     block_ptr = (block_t *) sbrk(SYSTEM_PAGE_SIZE);
-     if (block_ptr == NULL) {
-     errno = ENOMEM;
-     return -1;
-     }
-     block_ptr->next = NULL;
-     block_ptr->bin_type = BIN_8;
-
-     //	bin_t = (bin_t *) ((char*) block_ptr + sizeof(block_t));
-     bin_t bin = { 0 };
-     bin.blocks_ptr = block_ptr;
-     bin.type = BIN_8;
-
-     main_thread_arena.bins[0] = &bin;*/
-
-    return 0;
 }
 
 int get_index(size_t needed) {
-//    printf("size to allocate [%zu]\n", needed);
     int index = 0;
     int memory = 8; //Min. Memory Allocated
     while (memory < needed) {
-        if (index == 3) {
-            break;//Case for memory greater than 512, goes to MMAP bin at index 3
-        }
         memory *= 8;
         index++;
     }
@@ -140,10 +114,11 @@ int get_index(size_t needed) {
 
 block_t *get_unused_block(bin_t *bin_ptr) {
 
-    /*Do NOt Search for MMAP Blocks*/
-//    if (bin_ptr->type == BIN_MMAP) {
-//        return NULL;
-//    }
+    /*Do NOt Search if there are no Free Blocks*/
+    //TODO: STAT
+    /*if (bin_ptr->free_blocks == 0) {
+        return NULL;
+    }*/
 
     block_t *block_itr = bin_ptr->blocks_ptr;
 
@@ -159,10 +134,8 @@ block_t *get_unused_block(bin_t *bin_ptr) {
         }
         block_itr = block_itr->next;
     }
-
     /*No Free Block Found*/
     return NULL;
-
 }
 
 
@@ -194,29 +167,30 @@ void remove_block_from_bin(block_t *block_ptr) {
 }
 
 void free_block(block_t *block_ptr) {
-//    printf("inside free block\n");
-    pthread_mutex_lock(&thread_arena_ptr->lock);
-    thread_arena_ptr->no_of_threads--;
     if (block_ptr->type == BLOCK_MMAP) {
-        size_t mem_size = block_ptr->actual_size + sizeof(block_t);
-//        printf("Deallocating from addr [%p] with size[%zu], actual[%zu]\n",
-//               block_ptr, mem_size, block_ptr->actual_size);
-        remove_block_from_bin(block_ptr);
+        size_t mem_size = (size_t) (block_ptr->actual_size + sizeof(block_t));
         munmap(block_ptr, mem_size);
     } else {
+        //TODO::
+        /*
+        bin_t *bin_ptr = thread_arena_ptr->bins[block_ptr->bin_type];
+        bin_ptr->free_req++;
+        bin_ptr->free_blocks++;
+        bin_ptr->used_blocks--;
+        */
+        /*pthread_mutex_lock(&thread_arena_ptr->lock);*/
         block_ptr->block_status = BLOCK_AVAILABLE;
+        /*pthread_mutex_unlock(&thread_arena_ptr->lock);*/
     }
-    pthread_mutex_unlock(&thread_arena_ptr->lock);
 }
 
 void printArenas() {
-//	printf("Printing Arenas\n");
     arena_t *arena_itr = global_arena_ptr;
     int arena_count = 1;
     printf("-----------Global Arena [%p]\n", global_arena_ptr);
     while (arena_itr != NULL) {
-        printf("-----------Arena %d [%p]-----------\n", arena_count++,
-               arena_itr);
+        printf("-----------Arena %d [%p], threads[%d]-----------\n", arena_count++,
+               arena_itr, arena_itr->no_of_threads);
 
         for (int i = 0; i < MAX_BINS; i++) {
             bin_t *bin_ptr = arena_itr->bins[i];
@@ -263,68 +237,45 @@ void *my_memcpy(void *dest, const void *src, size_t num_bytes) {
 
 int add_blocks(size_t mem_size, int bin_index) {
 
-//    printf("Adding blocks with req size[%zu], bin_index[%d]\n", mem_size, bin_index);
     /*Get New Memory*/
-    void *new_mem_return_addr = get_new_memory(mem_size, bin_index);
-
-//    printf("got memory @ [%p]\n", new_mem_return_addr);
+    void *new_mem_return_addr = get_new_memory(mem_size);
 
     if (new_mem_return_addr == NULL) {
         errno = ENOMEM;
         return -1;
     }
 
-    /*Allocate New Memory to BINS*/
-    if (bin_index == BIN_MMAP) {
-//        printf("Allocating MMAP Memory\n");
-        /*Allocate MMAP Memory*/
-        block_t *block_ptr = (block_t *) new_mem_return_addr;
-        block_ptr->type = BLOCK_MMAP;
-        block_ptr->next = NULL;
-        block_ptr->bin_type = bin_index;
-        block_ptr->block_status = BLOCK_AVAILABLE;
+    /*Allocate SBRK Memory*/
+    /*Divide memory among all the Bins*/
+    /*Total Memory Size to allocate to Bins */
+    int memory_to_allocate = system_page_size;
 
-        bin_t *bin_ptr = thread_arena_ptr->bins[BIN_MMAP];
-        add_block_to_bin(bin_ptr, block_ptr);
+    while (memory_to_allocate > (block_size[0] + sizeof(block_t))) {
+        for (int i = 0; i < MAX_BINS; i++) {
 
-    } else {
-        /*Allocate SBRK Memory*/
-        /*Divide memory among all the Bins*/
-        /*Total Memory Size to allocate to Bins */
-//        printf("Allocating SBRK Memory\n");
-        int memory_to_allocate = system_page_size;
-
-        while (memory_to_allocate > (block_size[0] + sizeof(block_t))) {
-            for (int i = 0; i < MAX_BINS - 1; i++) {
-
-                if (memory_to_allocate < (block_size[i] + sizeof(block_t))) {
-                    break;
-                }
-
-//                printf("memory_to_allocate [%zu]\n", memory_to_allocate);
-
-//                printf("Creating Block for BIN - %s\n", BinTypeString[i]);
-                /*Memory allocated to the block*/
-                size_t mem_allocated = block_size[i] + sizeof(block_t);
-
-                block_t *block_ptr = (block_t *) new_mem_return_addr;
-                block_ptr->type = BLOCK_SBRK;
-                block_ptr->next = NULL;
-                block_ptr->bin_type = bin_index;
-                block_ptr->block_status = BLOCK_AVAILABLE;
-
-                bin_t *bin_ptr = thread_arena_ptr->bins[i];
-                add_block_to_bin(bin_ptr, block_ptr);
-
-                new_mem_return_addr += mem_allocated;
-                memory_to_allocate -= mem_allocated;
-
+            if (memory_to_allocate < (block_size[i] + sizeof(block_t))) {
+                break;
             }
+            /*Memory allocated to the block*/
+            size_t mem_allocated = block_size[i] + sizeof(block_t);
 
+            block_t *block_ptr = (block_t *) new_mem_return_addr;
+            block_ptr->type = BLOCK_SBRK;
+            block_ptr->next = NULL;
+            block_ptr->bin_type = bin_index;
+            if (block_ptr->bin_type > 2 || bin_index > 2)
+                printf("#################creating block bin_type [%d]\n", block_ptr->bin_type);
+            block_ptr->block_status = BLOCK_AVAILABLE;
+
+            bin_t *bin_ptr = thread_arena_ptr->bins[i];
+            //TODO: STAT
+            /*bin_ptr->free_blocks++;*/
+            add_block_to_bin(bin_ptr, block_ptr);
+
+            new_mem_return_addr += mem_allocated;
+            memory_to_allocate -= mem_allocated;
         }
-//        printArenas();
     }
-
     return 0;
 }
 
@@ -342,27 +293,22 @@ block_t *get_block(bin_t *bin_ptr, size_t mem_size, int bin_index) {
         /*STEP-3 :: Find Block*/
         block_ptr = get_unused_block(bin_ptr);
     }
+    //TODO: STAT
+    /*bin_ptr->free_blocks--;*/
+    //TODO: STAT
+    /*bin_ptr->used_blocks++;*/
     block_ptr->block_status = BLOCK_USED;
     block_ptr->actual_size = (mem_size - sizeof(block_t));
     return block_ptr;
 }
 
 void *malloc(size_t size) {
-//    printf("malloc size[%zu], thread[%lu]\n", size, pthread_self());
-//    printf("arena[%zu],bin[%zu],block[%zu]\n", sizeof(arena_t), sizeof(bin_t), sizeof(block_t));
-    /*Initialize Main Arena*/
-    if (initialize_main_arena() < 0) {
-        errno = ENOMEM;
-        return NULL;
-    }
-    //	printf("####Main thread initialized\n");
 
     block_t *block_ptr = NULL;
 
     /*Initialize Arenas*/
     if (thread_arena_ptr == NULL) {
         arena_t *arena_ptr = initialize_arenas();
-        //	printf("#### Arena Ptr %p", arena_ptr);
         if (arena_ptr == NULL) {
             errno = ENOMEM;
             return NULL;
@@ -372,48 +318,42 @@ void *malloc(size_t size) {
 
     size_t mem_size = size + sizeof(block_t);
 
-    /*Get the bin index based on user requested memory + block size*/
-    int bin_index = get_index(mem_size);
+    if (mem_size > MAX_HEAP_SIZE) {
+        /*MMAP*/
+        block_ptr = (block_t *) get_new_memory(mem_size);
+        block_ptr->type = BLOCK_MMAP;
+        block_ptr->block_status = BLOCK_USED;
+        block_ptr->actual_size = size;
+    } else {
+        /*SBRK */
+        /*Get the bin index based on user requested memory + block size*/
+        int bin_index = get_index(mem_size);
 
-//    printf("bin index[%d]\n", bin_index);
-    pthread_mutex_lock(&thread_arena_ptr->lock);
+        pthread_mutex_lock(&thread_arena_ptr->lock);
+        bin_t *bin_ptr = thread_arena_ptr->bins[bin_index];
+        //TODO: STAT
+        bin_ptr->allc_req++;
 
-    /*Increase thread count for arena*/
-    thread_arena_ptr->no_of_threads++;
+        /*Get Block*/
+        block_ptr = get_block(bin_ptr, mem_size, bin_index);
+        if (block_ptr == NULL) {
+            errno = ENOMEM;
+            return NULL;
+        }
 
-    bin_t *bin_ptr = thread_arena_ptr->bins[bin_index];
-
-
-    /*Get Block*/
-    block_ptr = get_block(bin_ptr, mem_size, bin_index);
-    if (block_ptr == NULL) {
-        errno = ENOMEM;
-        return NULL;
+        /*Release arena lock*/
+        pthread_mutex_unlock(&thread_arena_ptr->lock);
     }
 
-//    printf("%s:%d malloc(%zu): Allocated %zu bytes at %p\n",
-//           __FILE__, __LINE__, size, mem_size,
-//           (void *) block_ptr + sizeof(block_t));
-
-    //	printf("block addr=%p \n", block_ptr);
-    //	printf("aread addr=%p \n", block_ptr->thread_arena_ptr);
-    //	printf("bin index=%d\n", bin_index);
-    //	printf("bin bin_type_array=%s\n", BinTypeString[bin_type_array[bin_index]]);
-    //	printf("bin index=%s\n", bin_type_array[bin_index]);
-
-    /*Release arena lock*/
-    pthread_mutex_unlock(&thread_arena_ptr->lock);
-
-//    printArenas();
     /*Free Block Found*/
     return (void *) block_ptr + sizeof(block_t);
 }
 
-void *get_new_memory(size_t mem_size, int bin_index) {
+void *get_new_memory(size_t mem_size) {
     void *new_mem_return_addr = NULL;
-    if (bin_index == BIN_MMAP) {
+    if (mem_size > MAX_HEAP_SIZE) {
         /*Get Memory From MMAP*/
-        new_mem_return_addr = mmap(0, mem_size, PROT_READ | PROT_WRITE,
+        new_mem_return_addr = mmap(NULL, mem_size, PROT_READ | PROT_WRITE,
                                    MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
         if (new_mem_return_addr == MAP_FAILED) {
             errno = ENOMEM;
@@ -431,38 +371,15 @@ void *get_new_memory(size_t mem_size, int bin_index) {
     return new_mem_return_addr;
 }
 
-block_t *create_new_block(size_t size, int bin_index, const void *block_addr) {
-    block_t *block_ptr = (block_t *) block_addr;
-    block_ptr->next = NULL;
-    block_ptr->bin_type = bin_index;
-    block_ptr->block_status = BLOCK_USED;
-    block_ptr->actual_size = size;
-    block_ptr->type = (bin_index == BIN_MMAP) ? BLOCK_MMAP : BLOCK_SBRK;
-    return block_ptr;
-}
-
-
 void free(void *ptr) {
-//    printf("free ptr[%p],[%lu]\n", ptr, pthread_self());
     if (ptr == NULL) {
         return;
     }
-//	printf("free call\n");
-//	printf("raw add %p = \n", ptr);
     block_t *block_ptr = (block_t *) (ptr - sizeof(block_t));
-//	printf("Block ptr addre = %p\n", block_ptr);
-//    printf("%s:%d free(%p): Freeing %zu bytes from %p\n",
-//           __FILE__, __LINE__, ptr, block_ptr->actual_size, block_ptr);
     free_block(block_ptr);
-//    printArenas();
-
-//	printf("block free successfull\n");
-
 }
 
 void *realloc(void *ptr, size_t size) {
-// Allocate new memory (if needed) and copy the bits from old location to new.
-//    printf("***realloc pointer[%p], size[%zu], thread[%lu]\n", ptr, size, pthread_self());
     /*If size==0 and ptr exists the it is the call for free*/
     void *new_mem_add = NULL;
     if (size == 0 && ptr != NULL) {
@@ -478,17 +395,120 @@ void *realloc(void *ptr, size_t size) {
     }
 
     /*realloc call*/
-//    printf("***doing memset, thread[%lu]\n", pthread_self());
-    pthread_mutex_lock(&thread_arena_ptr->lock);
     block_t *old_block_ptr = (block_t *) (ptr - sizeof(block_t));
-//    printf("***copying mem[%zu], thread[%lu]\n", old_block_ptr->actual_size, pthread_self());
+
     /* Copy as many bytes as are available from the old block
 	             and fit into the new size.  */
     if (size > old_block_ptr->actual_size)
         size = old_block_ptr->actual_size;
     memcpy(new_mem_add, ptr, size);
-    pthread_mutex_unlock(&thread_arena_ptr->lock);
     free(ptr);
     return new_mem_add;
 }
+
+void fork_prepare() {
+    acquire_locks();
+}
+
+void fork_parent() {
+    release_locks();
+}
+
+void fork_child() {
+    release_locks();
+}
+
+void acquire_locks() {
+    pthread_mutex_lock(&arena_init_lock);
+    arena_t *arena_ptr = global_arena_ptr;
+    while (arena_ptr) {
+        pthread_mutex_lock(&arena_ptr->lock);
+        arena_ptr = arena_ptr->next;
+    }
+}
+
+void release_locks() {
+    arena_t *arena_ptr = global_arena_ptr;
+    while (arena_ptr) {
+        pthread_mutex_unlock(&arena_ptr->lock);
+        arena_ptr = arena_ptr->next;
+    }
+    pthread_mutex_unlock(&arena_init_lock);
+}
+
+void malloc_stats() {
+    arena_t *arena_itr = global_arena_ptr;
+    int arena_count = 1;
+    printf("============================MALLOC STATS===============================\n");
+    while (arena_itr != NULL) {
+        printf("============================Arena Info [%d]=============================\n", arena_count++);
+        printf("\t Total Size of Arena        : %ld KB\n", compute_malloc_stats(arena_itr));
+        printf("\t Total Number of Bins       : %d\n", MAX_BINS);
+        printf("======================================================================\n");
+        for (int i = 0; i < MAX_BINS; i++) {
+            bin_t *bin_ptr = arena_itr->bins[i];
+            int free_count = get_total_free_blocks(bin_ptr);
+            int used_count = get_total_used_blocks(bin_ptr);
+            printf("============================Bin Info [%s]=============================\n",
+                   BinTypeString[bin_ptr->type]);
+            //TODO: STAT
+            printf("\t Total Allocation Request : %d\n", bin_ptr->allc_req);
+            printf("\t Total Free Blocks        : %d\n", free_count);
+            printf("\t Total USed Blocks        : %d\n", used_count);
+            printf("\t Total Number of Blocks   : %d\n", free_count + used_count);
+        }
+        printf("======================================================================\n");
+        arena_itr = arena_itr->next;
+    }
+    printf("============================END OF MALLOC STATS=============================\n");
+}
+
+
+static long compute_malloc_stats(arena_t *arena_ptr) {
+    if (arena_ptr == NULL) {
+        return 0;
+    }
+    long total = sizeof(arena_t);
+    for (int i = 0; i < MAX_BINS; i++) {
+        bin_t *bin_ptr = arena_ptr->bins[i];
+        if (bin_ptr != NULL) {
+            total += sizeof(bin_t);
+            block_t *block_ptr = bin_ptr->blocks_ptr;
+            if (block_ptr != NULL) {
+                total += block_ptr->actual_size + sizeof(bin_t);
+            }
+        }
+    }
+    return total;
+}
+
+int get_total_free_blocks(bin_t *bin_ptr) {
+    block_t *block_itr = bin_ptr->blocks_ptr;
+    int count = 0;
+    while (block_itr != NULL) {
+        if (block_itr->block_status == BLOCK_AVAILABLE) {
+            count += 1;
+        }
+        block_itr = block_itr->next;
+    }
+    return count;
+}
+
+int get_total_used_blocks(bin_t *bin_ptr) {
+    block_t *block_itr = bin_ptr->blocks_ptr;
+    int count = 0;
+    while (block_itr != NULL) {
+        if (block_itr->block_status == BLOCK_USED) {
+            count += 1;
+        }
+        block_itr = block_itr->next;
+    }
+    return count;
+}
+
+__attribute__ ((constructor))
+void myconstructor() {
+    init_malloc();
+}
+
 

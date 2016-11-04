@@ -11,13 +11,14 @@ int main(int argc, char **argv) {
      printf("Successfully malloc'd %zu bytes at addr %p\n", size2, mem2);
      assert(mem1 != NULL);
      assert(mem2 != NULL);
-     free(mem1);
+     malloc_stats();
+     /*free(mem1);
      free(mem2);
      printf("Successfully free'd %zu bytes from addr %p\n", size1, mem1);
      printf("Successfully free'd %zu bytes from addr %p\n", size2, mem2);
      mem1 = malloc(size1);
      printf("Successfully malloc'd %zu bytes at addr %p\n", size1, mem1);
-     return 0;
+     return 0;*/
 
     /*size_t size1 = 513;
     size_t size2 = 600;

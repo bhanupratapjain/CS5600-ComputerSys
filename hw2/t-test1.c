@@ -8,8 +8,8 @@
  * Steven Fuerst 2009
  */
 
-#define USE_PTHREADS	1
-#define USE_MALLOC	0
+#define USE_PTHREADS 1
+#define USE_MALLOC	1
 #define USE_SPROC	0
 #define USE_THR		0
 
@@ -18,10 +18,12 @@
 #define TEST 0
 #endif
 
-/* Testing level */
+/* Testing FORK*/
 #ifndef TEST_FORK
 #define TEST_FORK 1
 #endif
+
+
 
 #define N_TOTAL		500
 #ifndef N_THREADS

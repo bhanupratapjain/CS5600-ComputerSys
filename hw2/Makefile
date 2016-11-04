@@ -1,6 +1,7 @@
 #Sample Makefile for Malloc
 CC=gcc
-CFLAGS=-g -O0 -fPIC -pthread
+#CFLAGS=-g -O0 -fPIC -pthread
+CFLAGS=-g -O0 -fPIC -pthread -fpack-struct
 
 all:	check
 

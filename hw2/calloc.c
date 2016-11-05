@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <errno.h>
+#include <string.h>
 
-#include "malloc.h"
-
+#include "block.h"
 
 void *calloc(size_t nmemb, size_t size) {
     void *add_ptr = malloc(nmemb * size);

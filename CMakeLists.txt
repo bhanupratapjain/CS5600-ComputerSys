@@ -6,5 +6,16 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Werror")
 
 #set_target_properties(CS5600_ComputerSys PROPERTIES LINKER_LANGUAGE c)
 
-set(SOURCE_FILES hw2/malloc.c hw2/calloc.c hw2/t-test1.c hw2/test1.c)
+set(SOURCE_FILES
+        hw2/malloc.c
+        hw2/calloc.c
+        hw2/t-test1.c
+        hw2/test1.c
+        hw2/arena.c
+        hw2/stats.c
+        hw2/bin.c
+        hw2/block.c
+        hw2/free.c
+        hw2/realloc.c
+        )
 add_executable(CS5600_ComputerSys ${SOURCE_FILES})

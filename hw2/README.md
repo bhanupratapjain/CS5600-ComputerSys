@@ -49,8 +49,7 @@ It is achieved by two locks
 - `arena lock`: Used during arena specific operations.
 
 #### Fork Safety
-To get a hold of all the free block in the child thread of all arenas, before fork, we unlock all the arenas and then these arenas are passed the child process. To achieve this we use `pthread_atfork` during init, and inject the following
-   
+To get a hold of all the free block in the child thread of all arenas, before fork, we unlock all the arenas and then these arenas are passed the child process. To achieve this we use `pthread_atfork` during init, and inject the following:
 - `fork_prepare` : Acquire all arena locks by parent in parent process space before fork.
 - `fork_parent` : Release all arena locks by parent in parent process space after fork.
 - `fork_child`: Release all arena locks by child in child process space after fork.

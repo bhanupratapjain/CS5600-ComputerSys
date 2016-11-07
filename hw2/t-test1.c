@@ -15,7 +15,7 @@
 
 /* Testing level */
 #ifndef TEST
-#define TEST 0
+#define TEST 1
 #endif
 
 /* Testing FORK*/

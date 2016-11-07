@@ -17,7 +17,7 @@ static int init_malloc() {
     }
     system_page_size = sysconf(_SC_PAGESIZE);
     no_of_processors = sysconf(_SC_NPROCESSORS_ONLN);
-    return -1;
+    return 0;
 }
 
 

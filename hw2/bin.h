@@ -15,7 +15,7 @@ typedef struct bin_t {
     uint8_t type;
     struct block_t *blocks_ptr;
     uint8_t allc_req;
-//    uint8_t free_req;
+    uint8_t free_req;
 //    uint8_t free_blocks;
 //    uint8_t used_blocks;
 } bin_t;

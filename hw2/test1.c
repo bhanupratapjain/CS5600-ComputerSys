@@ -1,16 +1,18 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "stats.h"
 
 int main(int argc, char **argv) {
      size_t size1 = 7;
      size_t size2 = 50;
      void *mem1 = malloc(size1);
-     void *mem2 = malloc(size2);
+//     void *mem2 = malloc(size2);
      printf("Successfully malloc'd %zu bytes at addr %p\n", size1, mem1);
-     printf("Successfully malloc'd %zu bytes at addr %p\n", size2, mem2);
+//     printf("Successfully malloc'd %zu bytes at addr %p\n", size2, mem2);
      assert(mem1 != NULL);
-     assert(mem2 != NULL);
+//     assert(mem2 != NULL);
+//     print_arenas();
      malloc_stats();
      /*free(mem1);
      free(mem2);

@@ -1,9 +1,10 @@
 #Sample Makefile for Malloc
 CC=gcc
+#CFLAGS=-g -O0 -fPIC -pthread -std=gnu99 -Wall
 #CFLAGS=-g -O0 -fPIC -pthread
-CFLAGS=-g -O0 -fPIC -pthread -fpack-struct
+CFLAGS=-g -O0 -fPIC -pthread -std=gnu99 -Wall -fpack-struct
 
-all:	check
+all: clean check
 
 clean:
 	rm -rf *.so *.o
@@ -30,3 +31,5 @@ dist:
 
 
 # set exec-wrapper env 'LD_PRELOAD=/home/bhanupratapjain/CS5600-ComputerSys/hw2/libmalloc.so'
+# set exec-wrapper env 'LD_PRELOAD= /home/vagrant/CS5600-ComputerSys/hw2/libmalloc.so'
+# LD_PRELOAD=`pwd`/libmalloc.so valgrind ./t-test1

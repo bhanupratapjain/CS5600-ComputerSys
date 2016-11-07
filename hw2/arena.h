@@ -41,5 +41,6 @@ void acquire_locks();
 
 void release_locks();
 
+int check_addr(void *ptr);
 
 #endif //ARENA_H

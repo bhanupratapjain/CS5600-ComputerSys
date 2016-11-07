@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <sys/mman.h>
-
 #include "block.h"
 
 
@@ -108,7 +107,7 @@ int add_blocks(size_t mem_size, int bin_index) {
     /*Total Memory Size to allocate to Bins */
     int memory_to_allocate = system_page_size;
 
-    while (memory_to_allocate > (block_size[0] + sizeof(block_t))) {
+    while (memory_to_allocate > (block_size[0])) {
         for (int i = 0; i < MAX_BINS; i++) {
 
             if (memory_to_allocate < (block_size[i] + sizeof(block_t))) {
@@ -120,9 +119,7 @@ int add_blocks(size_t mem_size, int bin_index) {
             block_t *block_ptr = (block_t *) new_mem_return_addr;
             block_ptr->type = BLOCK_SBRK;
             block_ptr->next = NULL;
-            block_ptr->bin_type = bin_index;
-            if (block_ptr->bin_type > 2 || bin_index > 2)
-                printf("#################creating block bin_type [%d]\n", block_ptr->bin_type);
+            block_ptr->bin_type = i;
             block_ptr->block_status = BLOCK_AVAILABLE;
 
             bin_t *bin_ptr = thread_arena_ptr->bins[i];
@@ -161,22 +158,47 @@ block_t *get_block(bin_t *bin_ptr, size_t mem_size, int bin_index) {
 }
 
 
-void free_block(block_t *block_ptr) {
+void free_block(void *ptr) {
+
+    block_t *block_ptr = (block_t *) (ptr - sizeof(block_t));
+
+    /*if (block_ptr->bin_type > 2) {
+        printf("ptr[%p], bintype[%d], status[%s],type[%s], size[%zu]\n", block_ptr, block_ptr->bin_type,
+               BlockTypeString[block_ptr->type], BlockStatusString[block_ptr->block_status], block_ptr->actual_size);
+
+    }*/
+
     if (block_ptr->type == BLOCK_MMAP) {
         size_t mem_size = (size_t) (block_ptr->actual_size + sizeof(block_t));
         munmap(block_ptr, mem_size);
     } else {
-        //TODO::
+
+        if (check_addr(ptr) < 0) {
+            return;
+        }
+        bin_t *bin_ptr = thread_arena_ptr->bins[block_ptr->bin_type];
+        bin_ptr->free_req++;
         /*
         bin_t *bin_ptr = thread_arena_ptr->bins[block_ptr->bin_type];
         bin_ptr->free_req++;
         bin_ptr->free_blocks++;
         bin_ptr->used_blocks--;
         */
+        //TODO::
         /*pthread_mutex_lock(&thread_arena_ptr->lock);*/
         block_ptr->block_status = BLOCK_AVAILABLE;
         /*pthread_mutex_unlock(&thread_arena_ptr->lock);*/
     }
+}
+
+int check_valid_block(block_t *block_ptr) {
+    if (thread_arena_ptr == NULL) {
+        return -1;
+    }
+    if (block_ptr != NULL && 0 <= block_ptr->bin_type <= 2)
+        return 0;
+    return -1;
+
 }
 
 void *get_new_memory(size_t mem_size) {

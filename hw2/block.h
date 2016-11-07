@@ -42,7 +42,10 @@ int add_blocks(size_t mem_size, int bin_index);
 
 block_t *get_block(struct bin_t *bin_ptr, size_t mem_size, int bin_index);
 
-void free_block(block_t *block_ptr);
+void free_block(void *ptr);
 
 void *get_new_memory(size_t mem_size);
+
+int check_valid_block(block_t *);
+
 #endif //BLOCK_H

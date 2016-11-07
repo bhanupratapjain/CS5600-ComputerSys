@@ -5,7 +5,7 @@
 #ifndef STATS_H
 #define STATS_H
 
-long compute_malloc_stats(struct arena_t *);
-void printArenas();
+long get_arena_size(struct arena_t *);
+void print_arenas();
 
 #endif //STATS_H

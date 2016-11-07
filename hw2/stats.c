@@ -51,9 +51,9 @@ void print_arenas() {
                 block_t *block_itr = bin_ptr->blocks_ptr;
                 while (block_itr != NULL) {
                     printf(
-                            "---------------BLOCK [%s] [%p] [%s]----------------\n",
-                            BlockStatusString[block_itr->block_status],
-                            block_itr, BlockTypeString[block_itr->type]);
+                            "---------------BLOCK [%d] [%p] [%d]----------------\n",
+                            block_itr->block_status,
+                            block_itr, block_itr->type);
                     block_itr = block_itr->next;
                 }
             }
@@ -61,10 +61,9 @@ void print_arenas() {
         printf("-----------END OF Arena-----------\n");
         arena_itr = arena_itr->next;
     }
-
 }
 
-long compute_malloc_stats(arena_t *arena_ptr) {
+long get_arena_size(arena_t *arena_ptr) {
     if (arena_ptr == NULL) {
         return 0;
     }
@@ -75,7 +74,7 @@ long compute_malloc_stats(arena_t *arena_ptr) {
             total += sizeof(bin_t);
             block_t *block_ptr = bin_ptr->blocks_ptr;
             if (block_ptr != NULL) {
-                total += block_ptr->actual_size + sizeof(bin_t);
+                total += (block_ptr->actual_size + sizeof(bin_t));
             }
         }
     }
@@ -87,18 +86,19 @@ void malloc_stats() {
     int arena_count = 1;
     printf("============================MALLOC STATS===============================\n");
     while (arena_itr != NULL) {
-        printf("============================Arena Info [%d]=============================\n", arena_count++);
-        printf("\t Total Size of Arena        : %ld KB\n", compute_malloc_stats(arena_itr));
+        printf("============================Arena [%d]=============================\n", arena_count++);
+        printf("\t Total Size of Arena        : %ld KB\n", get_arena_size(arena_itr));
         printf("\t Total Number of Bins       : %d\n", MAX_BINS);
         printf("======================================================================\n");
         for (int i = 0; i < MAX_BINS; i++) {
             bin_t *bin_ptr = arena_itr->bins[i];
             int free_count = get_total_free_blocks(bin_ptr);
             int used_count = get_total_used_blocks(bin_ptr);
-            printf("============================Bin Info [%s]=============================\n",
+            printf("============================Bin [%s]=============================\n",
                    BinTypeString[bin_ptr->type]);
             //TODO: STAT
             printf("\t Total Allocation Request : %d\n", bin_ptr->allc_req);
+            printf("\t Total Free Request       : %d\n", bin_ptr->free_req);
             printf("\t Total Free Blocks        : %d\n", free_count);
             printf("\t Total USed Blocks        : %d\n", used_count);
             printf("\t Total Number of Blocks   : %d\n", free_count + used_count);

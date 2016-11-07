@@ -4,7 +4,7 @@
  * A multi-thread test for malloc performance, maintaining one pool of
  * allocated bins per thread.
  *
- * Fixed condition variable usage, and ported to windows
+ * Fixed condition variable usage, and ported to win	dows
  * Steven Fuerst 2009
  */
 
@@ -19,9 +19,9 @@
 #endif
 
 /* Testing FORK*/
-//#ifndef TEST_FORK
-//#define TEST_FORK 1
-//#endif
+#ifndef TEST_FORK
+#define TEST_FORK 1
+#endif
 
 
 
@@ -398,11 +398,11 @@ static void malloc_test(void *ptr, size_t stack_len)
 	{
 		int status;
 
-//		printf("forking\n");
+		printf("forking\n");
 		pid = fork();
 		if (pid > 0)
 		{
-//			printf("waiting for %d...\n", pid);
+			printf("waiting for %d...\n", pid);
 			waitpid(pid, &status, 0);
 			if (!WIFEXITED(status))
 			{

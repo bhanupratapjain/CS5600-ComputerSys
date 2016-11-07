@@ -19,8 +19,8 @@ void initialize_bins(arena_t *arent_t_ptr) {
         bin_t_ptr->type = i;
         //TODO: STAT
         bin_t_ptr->allc_req = 0;
-        /*bin_t_ptr->free_req = 0;
-        bin_t_ptr->free_blocks = 0;
+        bin_t_ptr->free_req = 0;
+        /*bin_t_ptr->free_blocks = 0;
         bin_t_ptr->used_blocks = 0;*/
         arent_t_ptr->bins[i] = bin_t_ptr;
     }

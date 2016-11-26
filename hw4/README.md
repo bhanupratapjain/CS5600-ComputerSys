@@ -73,7 +73,7 @@
       movl 8(%esp), %edx
     ```
 
-6. Saving only the callee-save registers, `swtch` pushes the first four `%ebp, %ebx, %esi, %ebp`.
+6. > Saving only the callee-save registers, `swtch` pushes the first four `%ebp, %ebx, %esi, %ebp`.
  
         pushl %ebp
         pushl %ebx
@@ -151,4 +151,5 @@
 
 
 7. > By examining the function 'sys_dup()', you can discover how a system call to 'dup()' will manipulate both a file descriptor and a "file handle". Describe what it does in each of the two cases.
+    
     `sys_dup()` calls `argfd` to obtain the file corresponding to the system call and then calls `fdalloc` to assign it an additional file descriptor. If both are successful, it calls `filedup` to increase the reference count.

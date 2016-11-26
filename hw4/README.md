@@ -27,7 +27,7 @@ The data structure for process table is in `proc.h` at line 54.
 
 > When there is a context switch from one process to another, where are the values of the registers of the old process saved?
 
-- - File: `proc.h`
+- File: `proc.h`
 - Line: 44
 ```
   33 //PAGEBREAK: 17
@@ -102,12 +102,15 @@ It pops the values for `%edi, %esi, %ebx, and %ebp` and then returns. Because `s
 
 ## PROCESS STARTUP
 >Suppose a new program is going to start. This requires a call to the system call, exec(). On what lines does the operating system create the first call frame, to be used by the user process's main()?
+
 `copyout` at line 65 in `exec.c` created the first call frame.
 
 >The first call frame must have local variables argc and argv. Where is the value of argv found in the exec() call?
+
 `argv` is taken as a second argument in `exec()` call. 
 
 >On what lines does the function create the process table entry for the new process?
+
 `exec` allocates a new page table without user mapping with `setupkvm` at line 32(`exec.c`), allocates memory for each segment with `allocuvm` at line 44, and loads each segment into memory with `loaduvm` at line 46.
 
 ## SYSTEM CALLS 
@@ -116,19 +119,24 @@ It pops the values for `%edi, %esi, %ebx, and %ebp` and then returns. Because `s
 
 ## FILES AND FILE DESCRIPTORS
 > The function 'sys_open()' returns a file descriptor 'fd'. To do this, it opens a new file (new i-node) with 'filealloc()', and it allocates a new file descriptor with 'fdalloc()'. Where is the file descriptor allocated? Also, you will see that the file descriptor is one entry in an array. What is the algorithm used to choose which entry in the array to use for the new file descriptor? [ Comment: The name 'NOFILE' means "file number". "No." is sometimes used as an abbreviation for the word "number". ]
+
 The file descriptor is allocated in the `ofile` array in the `proc` structure. The file descriptors are allocated linearly by linear search and look for the first emply slot.. We perform a linear search for `ofile` array with a max file count of 16 defined by `NOFILE`
 
 > As you saw above, the file descriptor turned out to be an index in an array. What is the name of the array for which the file descriptor is an index? Also, what is the type of one entry in that array.
+
 The name if the array is `ofile` . Entries are of type `struct file`
 
 > The type that you saw in the above question is what I was calling a "file handle" (with an offset into the file, etc.). What is the name of the field that holds the offset into the file? We saw it in the function 'sys_open()'.
+
 The name of the field is `f->off`
 
 > Remember when we mentioned a call to 'filealloc()' above? Since the return value of 'filealloc()' is only a file handle, we need to initialize it. Presumably, we will initialize it with a file offset of 0. What is the line number in 'sys_open()' where we initialize the file offset to 0?
+
 Line no. 315 in `sysfile.c`
 
 > The file handle type was initialized to 'FD_INODE'. What are the other types that it could have been initialized to?
-`  enum { FD_NONE, FD_PIPE, FD_INODE } type;`
+
+`enum { FD_NONE, FD_PIPE, FD_INODE } type;`
 
 > Suppose a file handle had been initialized to FD_PIPE. Find the 'struct' that hold sthe information about a pipe. For each field in that struct, Explain briefly (just a phrase) the purpose of that field.
 

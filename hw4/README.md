@@ -41,12 +41,12 @@
 3. > What are the possible states of a process? Also, give a brief phrase describing the purpose of each state.
 
     The possible states of the process are: 
-    - `UNUSED`: A new process that is being created but not used. `Allocproc` scans the table for a process with state `UNUSED`. When it finds an unused process, `allocproc` sets the state to `EMBRYO` to mark it as used and gives the process a unique pid. 
-    - `EMBRYO`: New process that is currently being created. 
-    - `SLEEPING`: Blocked for I/O
-    - `RUNNABLE`: Ready to run.
-    - `RUNNING`: Currently executing.
-    - `ZOMBIE`:  When a child exits, it does not die immediately. Instead, it switches to the ZOMBIE process state until the parent calls wait tolearn of the exit. 
+    - **`UNUSED`**: A new process that is being created but not used. `Allocproc` scans the table for a process with state `UNUSED`. When it finds an unused process, `allocproc` sets the state to `EMBRYO` to mark it as used and gives the process a unique pid. 
+    - **`EMBRYO`**: New process that is currently being created. 
+    - **`SLEEPING`**: Blocked for I/O
+    - **`RUNNABLE`**: Ready to run.
+    - **`RUNNING`**: Currently executing.
+    - **`ZOMBIE`**:  When a child exits, it does not die immediately. Instead, it switches to the ZOMBIE process state until the parent calls wait tolearn of the exit. 
     
 
 4. > What is the function that does a context switch between two processes?

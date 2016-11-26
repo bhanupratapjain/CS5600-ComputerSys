@@ -48,7 +48,6 @@
     - **`RUNNING`**: Currently executing.
     - **`ZOMBIE`**:  When a child exits, it does not die immediately. Instead, it switches to the ZOMBIE process state until the parent calls wait tolearn of the exit. 
     
-
 4. > What is the function that does a context switch between two processes?
 
     `swtch` from `swtch.s` 
